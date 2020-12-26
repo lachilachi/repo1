@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    
+    <script>
+        
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('width', 1500)
+            .attr('height', 700)
+            
+        
+        const rect = svg.append('rect')
+            .attr('x', 200)
+            .attr('y', 200)
+            .attr('width', 200)
+            .attr('height', 200)
+            .attr('fill', 'red')
+            .call(
+                d3.zoom()
+                .scaleExtent([0.5, 3])
+                .on('zoom',zoomed)
+            )
+            .call(
+                d3.drag()
+                .on('start', dragStart)
+                .on('end', () => {})
+                .on('drag', dragged)
+            )
+            
+
+        let offset = { x: 0, y: 0 };
+
+        function dragStart() {
+            const {
+                x,
+                y
+            } = d3.event
+            offset.x = d3.event.x - d3.select(this).attr('x');
+            offset.y = d3.event.y - d3.select(this).attr('y');
+        }
+        
+        function dragged() {
+
+            d3.select(this)
+            .attr('x', d3.event.x - offset.x)
+            .attr('y', d3.event.y - offset.y);
+        }
+
+        function zoomed() {
+            rect.attr("transform", d3.event.transform)
+        }
+
+    </script>
+</body>
+</html>
