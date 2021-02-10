@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <script>
+        const svg = d3.select('body')
+        .append('svg')
+        .attr('width', 1500)
+        .attr('height', 700)
+        .attr('id', 'svg');
+        
+        let rect1x = 300, rect1y = 100, rect2x = 900, rect2y = 300;
+        let rect1Width = 300, rect1Height = 300, rect2Width = 300, rect2Height = 300;
+
+        const g0 = svg.append('g')
+        .attr('id', 'rect-g'); //用于存放矩形的容器  四层结构  svg g0 g1/2 rect+circle
+
+        d3.select('#rect-g')
+        .append('g')
+        .attr('id', 'rect-g-1')
+        .append('rect')
+        .attr('id', 'rect-g-1-rect')
+        .attr('x', rect1x)
+        .attr('y', rect1y)
+        .attr('width', rect1Width)
+        .attr('height', rect1Height)
+        .attr('fill', 'lime')
+        .call(
+            d3.drag()
+            .on('start', dragStart)
+            .on('end', () => {})
+            .on('drag', dragged)
+            );
+        
+        const xy1 = [(+d3.select('#rect-g-1-rect').attr('x')), (+d3.select('#rect-g-1-rect').attr('y'))] // 顶点坐标
+        const wh1 = [(+d3.select('#rect-g-1-rect').attr('width')), (+d3.select('#rect-g-1-rect').attr('height'))] // 矩形宽高
+        const dot1 = [[(xy1[0] * 2 + wh1[0]) / 2, xy1[1]], [(xy1[0] * 2 + wh1[0]) / 2, xy1[1] + wh1[1]], [xy1[0], (xy1[1] * 2 + wh1[1]) / 2], [xy1[0] + wh1[0], (xy1[1] * 2 + wh1[1]) / 2]] // 上1下2左3右4 得到四个中点
+        d3.select('#rect-g-1')
+        .selectAll('circle')
+        .data(dot1)
+        .enter()
+        .append('circle')
+        .attr('cx', d => d[0])
+        .attr('cy', d => d[1])
+        .attr('r', 5)
+        .attr('fill', 'red');
+        
+
+        d3.select('#rect-g')
+        .append('g')
+        .attr('id', 'rect-g-2')
+        .append('rect')
+        .attr('id', 'rect-g-2-rect')
+        .attr('x', rect2x)
+        .attr('y', rect2y)
+        .attr('width', rect2Width)
+        .attr('height', rect2Height)
+        .attr('fill', 'lightblue')
+        .call(
+            d3.drag()
+            .on('start', dragStart)
+            .on('end', () => {})
+            .on('drag', dragged)
+            );
+
+        const xy2 = [(+d3.select('#rect-g-2-rect').attr('x')), (+d3.select('#rect-g-2-rect').attr('y'))] // 顶点坐标
+        const wh2 = [(+d3.select('#rect-g-2-rect').attr('width')), (+d3.select('#rect-g-2-rect').attr('height'))] // 矩形宽高
+        const dot2 = [[(xy2[0] * 2 + wh2[0]) / 2, xy2[1]], [(xy2[0] * 2 + wh2[0]) / 2, xy2[1] + wh2[1]], [xy2[0], (xy2[1] * 2 + wh2[1]) / 2], [xy2[0] + wh2[0], (xy2[1] * 2 + wh2[1]) / 2]] // 上1下2左3右4 得到四个中点
+        d3.select('#rect-g-2')
+        .selectAll('circle')
+        .data(dot2)
+        .enter()
+        .append('circle')
+        .attr('cx', d => d[0])
+        .attr('cy', d => d[1])
+        .attr('r', 5)
+        .attr('fill', 'orange');
+
+        const line11 = svg.append('line')
+        .attr('x1', 0)
+        .attr('y1', 0)
+        .attr('x2', 0)
+        .attr('y2', 0)
+        .style("stroke", "black")
+        .style("stroke-width", 3)
+        .style("display", 'none')
+        .attr('id', 'line11');
+
+        let offset = { x : 0, y : 0, x1 : 0, y1 : 0, x2 : 0, y2 : 0,};
+
+        function dragStart() {
+            const {x, y} = d3.event
+            offset.x = d3.event.x - d3.select(this).attr('x');//当前鼠标坐标-拖拽的矩形左上顶点坐标，（拖动位置偏移量）
+            offset.y = d3.event.y - d3.select(this).attr('y');
+
+            //求出四个中点偏移量
+            const id = d3.select(this)._groups[0][0].parentNode.id // 获取父元素的id
+            d3.select(`#${id}`)
+            .selectAll('circle')
+            .each(function() {
+                const origin = [d3.event.x - (+d3.select(this).attr('cx')), d3.event.y - (+d3.select(this).attr('cy'))]
+                d3.select(this)
+                .attr('o-x', origin[0])
+                .attr('o-y', origin[1])
+            //连线偏移量
+            offset.x1 = d3.event.x - (+d3.select('#line11').attr('x1'));
+            offset.y1 = d3.event.y - (+d3.select('#line11').attr('y1'));
+            offset.x2 = d3.event.x - (+d3.select('#line11').attr('x2'));
+            offset.y2 = d3.event.y - (+d3.select('#line11').attr('y2'));
+            });
+        }
+        
+        function dragged() {
+
+            d3.select(this)
+            .attr('x', d3.event.x - offset.x)
+            .attr('y', d3.event.y - offset.y);
+
+            const id = d3.select(this)._groups[0][0].parentNode.id // 获取父元素的id
+            d3.select(`#${id}`)
+            .selectAll('circle')
+            .each(function() {
+                d3.select(this)
+                .attr('cx', d3.event.x - d3.select(this).attr('o-x'))
+                .attr('cy', d3.event.y - d3.select(this).attr('o-y'))
+            });
+            
+            if('rect-g-1-rect' == d3.select(this).attr('id')){  //判断哪个矩形移动了，id可能为'rect-g-1-rect'或'rect-g-2-rect'
+                d3.select('#line11')
+                .attr('x1', d3.event.x - offset.x1)
+                .attr('y1', d3.event.y - offset.y1)
+            }
+            else{
+                d3.select('#line11')
+                .attr('x2', d3.event.x - offset.x2)
+                .attr('y2', d3.event.y - offset.y2)
+            }
+        }
+        
+        
+
+        // var Linenum =1;
+        let flag = false; //判断一个直线是否完成
+        let linex1 = 0, liney1 = 0, linex2 = 0, liney2 = 0; //直线起始/终点
+
+        d3.selectAll('circle')
+        .on('click', function(d){
+            //如果线状态为flase，设置起点坐标
+            if(flag == false){   
+                linex1 = d3.select(this).attr('cx')
+                liney1 = d3.select(this).attr('cy')      
+                flag = true      
+                d3.select('#line11')
+                .attr('x1', linex1)
+                .attr('y1', liney1)
+                .style('stroke', "black")
+                .style('stroke-width', 2)
+                .style('display', '');
+            }
+            //为true则设置终点坐标
+            else{
+                flag = false
+                linex2 = d3.select(this).attr('cx')
+                liney2 = d3.select(this).attr('cy')
+                d3.select('#line11')
+                .attr('x2', linex2)
+                .attr('y2', liney2);
+        
+                d3.select('#svg').on('mousemove', null);
+                // d3.selectAll('circle').on('mouseup', null);
+                // d3.selectAll('circle').on('mousedown', null);
+            }
+        });
+
+        // d3.selectAll('circle')
+        // .on('click', function(d){
+
+        // });
+
+        d3.select('#svg')
+        .on('mousemove', function(d){
+            
+                var mouseLoc = d3.mouse(this);
+                d3.select('#line11')
+                .attr('x2', mouseLoc[0])
+                .attr('y2', mouseLoc[1]);
+            
+        });
+
+    </script>
+</body>
+</html>
